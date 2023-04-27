@@ -103,9 +103,9 @@ calPower <- function(delta,vars,rho0,rho1,rho2,N,t,m,alpha=0.05,user.spec.df=0)
   pred.power.t <- c(pred.power.t.HG,pred.power.t.JM,pred.power.t.CS,pred.power.t.ANCOVA)
   pred.power.z <- c(pred.power.z.HG,pred.power.z.JM,pred.power.z.CS,pred.power.z.ANCOVA)
   
-  names(sigmaks.sq)<-c("Follow-up","Joint Model","Change Score Model","ANCOVA Model")
-  names(pred.power.t)<-c("Follow-up","Joint Model","Change Score Model","ANCOVA Model")
-  names(pred.power.z)<-c("Follow-up","Joint Model","Change Score Model","ANCOVA Model")
+  names(sigmaks.sq)<-c("Follow-up Model (HG)","Joint Model","Change Score Model","ANCOVA Model")
+  names(pred.power.t)<-c("Follow-up Model (HG)","Joint Model","Change Score Model","ANCOVA Model")
+  names(pred.power.z)<-c("Follow-up Model (HG)","Joint Model","Change Score Model","ANCOVA Model")
   
   param <- list(vard=c(sigmaks.sq),pred.power.t=c(pred.power.t),pred.power.z=c(pred.power.z))
   return(param)
