@@ -1,4 +1,3 @@
-library(mvtnorm)
 ########################################################################################################################################################
 ##Power/Sample Size Calculation for incorporating a baseline measurement.##
 # INPUT
