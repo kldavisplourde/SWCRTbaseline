@@ -24,7 +24,7 @@
 # t: number of time periods
 # m: cluster-period size
 # alpha: type I error control, default is 0.05
-# user.spec.df: degrees of freedom for joint model, change score model, and ANCOVA model (Default is N-3), for Hooper/Girling (follow-up) model this is always set to N-2
+# user.spec.df: degrees of freedom for bivariate model, change score model, and ANCOVA model (Default is N-3), for Hooper/Girling (follow-up) model this is always set to N-2
 ########################################################################################################################################################
 ####Function to Calculate Power Given Design Configurations based on the t test#######
 ####Critical value c is set to t_alpha, (1-alpha)th quantile of the t distribution with df = N-2###
@@ -71,7 +71,7 @@ calPower <- function(delta,vars,rho0,rho1,rho2,N,t,m,alpha=0.05,user.spec.df=0)
   sigma2.y1 <- vars[2]
   
   # Variance of treatment effect: vard
-    ## Joint model
+    ## Bivariate model
     vard.JM <- ((N*t/m)*sigma2.y1*(lambda2.0*lambda2.1-tau2^2)*(lambda3.0*lambda3.1-tau3^2))/((N*t*U-t*W+U^2-N*V)*lambda2.0*(lambda3.0*lambda3.1-tau3^2) - (U^2-N*V)*lambda3.0*(lambda2.0*lambda2.1-tau2^2))
   
     ## Change score model
@@ -103,9 +103,9 @@ calPower <- function(delta,vars,rho0,rho1,rho2,N,t,m,alpha=0.05,user.spec.df=0)
   pred.power.t <- c(pred.power.t.HG,pred.power.t.JM,pred.power.t.CS,pred.power.t.ANCOVA)
   pred.power.z <- c(pred.power.z.HG,pred.power.z.JM,pred.power.z.CS,pred.power.z.ANCOVA)
   
-  names(sigmaks.sq)<-c("Follow-up Model (HG)","Joint Model","Change Score Model","ANCOVA Model")
-  names(pred.power.t)<-c("Follow-up Model (HG)","Joint Model","Change Score Model","ANCOVA Model")
-  names(pred.power.z)<-c("Follow-up Model (HG)","Joint Model","Change Score Model","ANCOVA Model")
+  names(sigmaks.sq)<-c("Follow-up Model (HG)","Bivariate Model","Change Score Model","ANCOVA Model")
+  names(pred.power.t)<-c("Follow-up Model (HG)","Bivariate Model","Change Score Model","ANCOVA Model")
+  names(pred.power.z)<-c("Follow-up Model (HG)","Bivariate Model","Change Score Model","ANCOVA Model")
   
   param <- list(vard=c(sigmaks.sq),pred.power.t=c(pred.power.t),pred.power.z=c(pred.power.z))
   return(param)
