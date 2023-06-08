@@ -1,7 +1,3 @@
-#setwd("C:/Users/lifan/Dropbox/CRT_Coprimary/Data/")
-#data=read.csv("short2.csv",header=TRUE)
-
-#library(nlme)
 library(lme4)
 library(mvtnorm)
 library(numDeriv)
@@ -9,14 +5,11 @@ library(numDeriv)
 # function to perform EM estimation with K=2 outcomes
 EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=1e-4
                      , verbose=FALSE){
-  # fit mixed model to initialize parameters
-  #fm1 <- lme(formula1, random = ~ 1|cluster, data=data,control=lmeControl(returnObject=TRUE))
-  #fm2 <- lme(formula2, random = ~ 1|cluster, data=data,control=lmeControl(returnObject=TRUE))
   K <- 2
   zeta <- as.numeric(c(fixef(fm1), fixef(fm2)))
-  beta1 = as.numeric(fixef(fm1))
-  beta2 = as.numeric(fixef(fm2))
-  if (length(beta1) != length(beta2))
+  beta1 = as.numeric(fixef(fm1))                            #This will be the baseline outcome model, no trt effect
+  beta2 = as.numeric(fixef(fm2))                            #This will be the endline outcome model, trt effect included
+  if (length(beta1) != length(beta2))                       #This is an issue! We no longer have the same number of covariates in each model! Therefore, there isn't a shared design matrix as used in line 56
     stop("\nnumber of covariates do not match between endpoints.")
   nvar<-length(beta1)
   TermsX1 <- terms(fm1)
