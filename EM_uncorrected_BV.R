@@ -9,15 +9,15 @@ EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=
   zeta <- as.numeric(c(fixef(fm1), fixef(fm2)))
   beta1 = as.numeric(fixef(fm1))                            #This will be the baseline outcome model, no trt effect
   beta2 = as.numeric(fixef(fm2))                            #This will be the endline outcome model, trt effect included
-  if (length(beta1) != length(beta2))                       #This is an issue! We no longer have the same number of covariates in each model! Therefore, there isn't a shared design matrix as used in line 56
+  if (length(beta1)+1 != length(beta2))                       #This might be an issue! We no longer have the same number of covariates in each model! Therefore, there isn't a shared design matrix as used in line 56
     stop("\nnumber of covariates do not match between endpoints.")
   nvar<-length(beta1)
   TermsX1 <- terms(fm1)
   TermsX2 <- terms(fm2)
   mfX1 <- model.frame(TermsX1, data = data)[,-1]
   mfX2 <- model.frame(TermsX2, data = data)[,-1]
-  if (identical(mfX1,mfX2) == FALSE)
-    stop("\ncovariates do not match between endpoints.")
+  #if (identical(mfX1,mfX2) == FALSE)
+    #stop("\ncovariates do not match between endpoints.")
   # Z matrix
   bar.f <- findbars(formula(fm1)) # Identify random effect terms (find |)
   mf <- model.frame(subbars(fm1),data=data) # Replaces | with +
@@ -53,7 +53,8 @@ EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=
   nperiods <- table(unique(cbind(data[, paste(cluster)],data[, paste(cluster.period)]))[,1]) # number of periods in each cluster
   t <- max(nperiods)
   cID.period <- unique(cbind(data[, paste(cluster)],data[, paste(cluster.period)]))[,1]
-  X <- as.matrix(cbind(1, mfX1)) # design matrix
+  X1 <- as.matrix(cbind(1, mfX1)) # design matrix for baseline measure
+  X2 <- as.matrix(cbind(1, mfX2)) # design matrix for endline measure
   
   # Function for generating inverse of block diagonal covariance matrix for the set of all random effects
   bdiag_m <- function(lmat) {
@@ -94,16 +95,16 @@ EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=
   
   loglik = function(theta){
     beta1 = theta[1:nvar]
-    beta2 = theta[(nvar+1):(2*nvar)]
-    sphi11 = theta[(2*nvar+1)]
-    sphi12 = theta[(2*nvar+2)]
-    sphi22 = theta[(2*nvar+3)]
-    se11 = theta[(2*nvar+4)]
-    se12 = theta[(2*nvar+5)]
-    se22 = theta[(2*nvar+6)]
-    spsi11 = theta[(2*nvar+7)]
-    spsi12 = theta[(2*nvar+8)]
-    spsi22 = theta[(2*nvar+9)]
+    beta2 = theta[(nvar+1):(2*nvar+1)]
+    sphi11 = theta[(2*nvar+2)]
+    sphi12 = theta[(2*nvar+3)]
+    sphi22 = theta[(2*nvar+4)]
+    se11 = theta[(2*nvar+5)]
+    se12 = theta[(2*nvar+6)]
+    se22 = theta[(2*nvar+7)]
+    spsi11 = theta[(2*nvar+8)]
+    spsi12 = theta[(2*nvar+9)]
+    spsi22 = theta[(2*nvar+10)]
     SigmaPhi = matrix(c(sphi11,sphi12,sphi12,sphi22),2,2)
     SigmaPsi = matrix(c(spsi11,spsi12,spsi12,spsi22),2,2)
     SigmaE = matrix(c(se11,se12,se12,se22),2,2)
@@ -114,8 +115,9 @@ EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=
     temp <- 0
     for(j in 1:n){
       Yj <- Y[ID == j,,drop=FALSE]
-      Xj <- X[ID == j,,drop=FALSE]
-      residj <- Yj - cbind(Xj%*%beta1, Xj%*%beta2)
+      Xj1 <- X1[ID == j,,drop=FALSE]
+      Xj2 <- X2[ID == j,,drop=FALSE]
+      residj <- Yj - cbind(Xj1%*%beta1, Xj2%*%beta2)
       obs = c(t(residj))
       psizes <- mp[cID.period==j]
       if(m[j]/nperiods[j] == psizes[1]){     #If equal number of subjects/period
@@ -157,16 +159,17 @@ EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=
     count2 <- 1
     for(j in 1:n){
       Yj <- Y[ID == j,,drop=FALSE]
-      Xj <- X[ID == j,,drop=FALSE]
+      Xj1 <- X1[ID == j,,drop=FALSE]
+      Xj2 <- X2[ID == j,,drop=FALSE]
       Zj <- Z[ID == j,] 
       Zj <- Zj[,colSums(Zj)>0] 
       Zjj <- kronecker(Zj,diag(1,nrow=K))
       mlist <- c(replicate(1,InvS2Phi,simplify=FALSE),replicate(nperiods[j], InvS2Psi, simplify=FALSE))
       InvS2Zeta <- bdiag_m(mlist)
-      residj <- Yj - cbind(Xj%*%beta1, Xj%*%beta2)
+      residj <- Yj - cbind(Xj1%*%beta1, Xj2%*%beta2)
       residjj <- kronecker(residj[,1],matrix(c(1,0),nrow=K)) + kronecker(residj[,2],matrix(c(0,1),nrow=K))
-      Vj <- solve(InvS2Zeta + t(Zjj)%*%kronecker(diag(1,nrow=nrow(Xj)),InvS2E)%*%Zjj)
-      Muj <- Vj %*% t(Zjj)%*%kronecker(diag(1,nrow=nrow(Xj)),InvS2E)%*%residjj
+      Vj <- solve(InvS2Zeta + t(Zjj)%*%kronecker(diag(1,nrow=nrow(Xj1)),InvS2E)%*%Zjj)
+      Muj <- Vj %*% t(Zjj)%*%kronecker(diag(1,nrow=nrow(Xj1)),InvS2E)%*%residjj
       Nujj <- Vj + tcrossprod(Muj)
       
       ESSphi1[j,] <- Muj[1:K,]
@@ -199,19 +202,27 @@ EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=
     InvS2Psi <- solve(SigmaPsi)
     
     # Maximization step - zeta
-    # Simplify the expression analytically, and obtain simple expression!
-    XXt <- crossprod(X)
-    Vzeta <-solve(kronecker(InvS2E, XXt))
-    rzeta1 <- t(X)%*%(Y[,1]-ESSphi1[ID,1]-ESSpsi1[ID.period,1])
-    rzeta2 <- t(X)%*%(Y[,2]-ESSphi1[ID,2]-ESSpsi1[ID.period,2])
-    zeta <- Vzeta %*% rbind(InvS2E[1,1]*rzeta1 + InvS2E[1,2]*rzeta2,
-                            InvS2E[2,1]*rzeta1 + InvS2E[2,2]*rzeta2)
+    # Let Beta = (baseline betas, endline betas)^T
+    DSigmaED <- 0
+    DSigmaEResid <- 0
+    rzeta1 <- Y[,1]-ESSphi1[ID,1]-ESSpsi1[ID.period,1]
+    rzeta2 <- Y[,2]-ESSphi1[ID,2]-ESSpsi1[ID.period,2]
+    for(j in 1:nrow(data)){
+      Yj <- Y[j,,drop=FALSE]
+      Xj1 <- X1[j,,drop=FALSE]
+      Xj2 <- X2[j,,drop=FALSE]
+      X<-as.matrix(rbind(c(Xj1,rep(0,length(Xj2))),c(rep(0,length(Xj1)),Xj2)))
+      DSigmaED <- t(X)%*%InvS2E%*%X + DSigmaED
+      DSigmaEResid <- t(X)%*%InvS2E%*%as.matrix(rbind(rzeta1[1,drop=FALSE],rzeta2[1,drop=FALSE])) + DSigmaEResid
+    }
+    
+    zeta <- solve(DSigmaED)%*%DSigmaEResid
     zeta <- c(zeta)
     beta1 = zeta[1:nvar]
-    beta2 = zeta[(nvar+1):(2*nvar)]
+    beta2 = zeta[(nvar+1):(2*nvar+1)]
     
     # Maximization step - epsilon
-    re <- Y - cbind(X%*%beta1, X%*%beta2)
+    re <- Y - cbind(X1%*%beta1, X2%*%beta2)
     rss <- crossprod(re) + rowSums(sweep(ESSphi2,3,m,FUN="*"),dims=2) + rowSums(sweep(ESSpsi2,3,mp,FUN="*"),dims=2) -
       crossprod(ESSphi1,rowsum(re,ID)) - crossprod(rowsum(re,ID),ESSphi1) -
       crossprod(ESSpsi1,rowsum(re,ID.period)) - crossprod(rowsum(re,ID.period),ESSpsi1) +
