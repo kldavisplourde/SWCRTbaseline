@@ -208,12 +208,11 @@ EM.estim <- function(data, fm1,fm2, cluster,cluster.period, maxiter=500,epsilon=
     rzeta1 <- Y[,1]-ESSphi1[ID,1]-ESSpsi1[ID.period,1]
     rzeta2 <- Y[,2]-ESSphi1[ID,2]-ESSpsi1[ID.period,2]
     for(j in 1:nrow(data)){
-      Yj <- Y[j,,drop=FALSE]
       Xj1 <- X1[j,,drop=FALSE]
       Xj2 <- X2[j,,drop=FALSE]
       X<-as.matrix(rbind(c(Xj1,rep(0,length(Xj2))),c(rep(0,length(Xj1)),Xj2)))
       DSigmaED <- t(X)%*%InvS2E%*%X + DSigmaED
-      DSigmaEResid <- t(X)%*%InvS2E%*%as.matrix(rbind(rzeta1[1,drop=FALSE],rzeta2[1,drop=FALSE])) + DSigmaEResid
+      DSigmaEResid <- t(X)%*%InvS2E%*%as.matrix(rbind(rzeta1[j,drop=FALSE],rzeta2[j,drop=FALSE])) + DSigmaEResid
     }
     
     zeta <- solve(DSigmaED)%*%DSigmaEResid
