@@ -58,13 +58,13 @@ calPower <- function(delta,vars,rho0,rho1,rho2,N,t,m,alpha=0.05,user.spec.df=0)
   # Eigenvalues and taus
   lambda1.0 <- 1-rho0.0
   lambda1.1 <- 1-rho0.1
-  lambda2.0 <- 1-N*rho1.0+(N-1)*rho0.0
-  lambda2.1 <- 1-N*rho1.1+(N-1)*rho0.1
-  lambda3.0 <- 1+(T-1)*N*rho1.0+(N-1)*rho0.0
-  lambda3.1 <- 1+(T-1)*N*rho1.1+(N-1)*rho0.1
+  lambda2.0 <- 1-m*rho1.0+(m-1)*rho0.0
+  lambda2.1 <- 1-m*rho1.1+(m-1)*rho0.1
+  lambda3.0 <- 1+(t-1)*m*rho1.0+(m-1)*rho0.0
+  lambda3.1 <- 1+(t-1)*m*rho1.1+(m-1)*rho0.1
   tau1 <- rho2.01-rho0.01
-  tau2 <- rho2.01-N*rho1.01+(N-1)*rho0.01
-  tau3 <- rho2.01+(T-1)*N*rho1.01+(N-1)*rho0.01
+  tau2 <- rho2.01-m*rho1.01+(m-1)*rho0.01
+  tau3 <- rho2.01+(t-1)*m*rho1.01+(m-1)*rho0.01
   
   # Total variances
   sigma2.y0 <- vars[1]
@@ -95,34 +95,33 @@ calPower <- function(delta,vars,rho0,rho1,rho2,N,t,m,alpha=0.05,user.spec.df=0)
     vard.HG <- ((N*t/m)*sigma2.y1*lambda2.1*lambda3.1)/((N*t*U-t*W+U^2-N*V)*lambda3.1 - (U^2-N*V)*lambda2.1)
   
     ## ANCOVA model: Asymptotic variance
-    rho.01 <- sigma.e01/(sqrt(sigma2.e1)*sqrt(sigma2.e0))
     gamma <- rho2.01*sqrt(sigma2.y1)/sqrt(sigma2.y0)
-    tilde.sigma2.s <- sigma2.s1 -2*gamma*sigma.s01 + gamma^2*sigma2.s0
-    tilde.sigma2.b <- sigma2.b1 -2*gamma*sigma.b01 + gamma^2*sigma2.b0
-    tilde.sigma2.e <- sigma2.e1*(1-rho.01^2)
-    num <- (N/m)*(tilde.sigma2.e+m*tilde.sigma2.s)*(tilde.sigma2.e+m*tilde.sigma2.s+t*m*tilde.sigma2.b)
-    den <- (N*U-W)*(tilde.sigma2.e+m*tilde.sigma2.s)+m*tilde.sigma2.b*(U^2+N*t*U-t*W-N*V)
+    num<-(N/m)*(sigma2.y1*(lambda2.1-tau1^2/lambda1.0)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau2-tau1)+gamma^2*sigma2.y0*(lambda2.0-lambda1.0))*(sigma2.y1*(lambda3.1-tau1^2/lambda1.0)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau3-tau1)+gamma^2*sigma2.y0*(lambda3.0-lambda1.0))
+    den<-(1/t)*(U^2+N*t*U-t*W-N*V)*(sigma2.y1*(lambda3.1-lambda2.1)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau3-tau2)+gamma^2*sigma2.y0*(lambda3.0-lambda2.0))+(N*U-W)*(sigma2.y1*(lambda2.1-tau1^2/lambda1.0)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau2-tau1)+gamma^2*sigma2.y0*(lambda2.0-lambda1.0))
     vard.ANCOVA <- num/den
-    
-    #num<-(N/m)*(sigma2.y1*(lambda2.1-tau1^2/lambda1.0)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau2-tau1)+gamma^2*sigma2.y0*(lambda2.0-lambda1.0))*(sigma2.y1*(lambda3.1-tau1^2/lambda1.0)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau3-tau1)+gamma^2*sigma2.y0*(lambda3.0-lambda1.0))
-    #den<-(1/t)*(U^2+N*t*U-t*W-N*V)*(sigma2.y1*(lambda3.1-lambda2.1)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau3-tau2)+gamma^2*sigma2.y0*(lambda3.0-lambda2.0))+(N*U-W)*(sigma2.y1*(lambda2.1-tau1^2/lambda1.0)-2*gamma*sqrt(sigma2.y1)*sqrt(sigma2.y0)*(tau2-tau1)+gamma^2*sigma2.y0*(lambda2.0-lambda1.0))
-    #vard.ANCOVA <- num/den
-    #ABOVE EXPRESSION DOES NOT MATCH...
+    #This is equivalent to:
+      #rho.01 <- sigma.e01/(sqrt(sigma2.e1)*sqrt(sigma2.e0))
+      #tilde.sigma2.s <- sigma2.s1 -2*gamma*sigma.s01 + gamma^2*sigma2.s0
+      #tilde.sigma2.b <- sigma2.b1 -2*gamma*sigma.b01 + gamma^2*sigma2.b0
+      #tilde.sigma2.e <- sigma2.e1*(1-rho.01^2)
+      #num <- (N/m)*(tilde.sigma2.e+m*tilde.sigma2.s)*(tilde.sigma2.e+m*tilde.sigma2.s+t*m*tilde.sigma2.b)
+      #den <- (N*U-W)*(tilde.sigma2.e+m*tilde.sigma2.s)+m*tilde.sigma2.b*(U^2+N*t*U-t*W-N*V)
+      #vard.ANCOVA <- num/den
     
     sigmaks.sq <- c(vard.HG,vard.BV,vard.CS,vard.ANCOVA)
   
   #Power
-  criticalValue.t.HG <- qt(p=(1-alpha), df=(N-2))
-  criticalValue.t <- qt(p=(1-alpha), df=df.models)
-  criticalValue.z <- qnorm(p=(1-alpha))
-  pred.power.t.HG <- 1-pt(criticalValue.t, df=(N-2), delta/sqrt(vard.HG))
-  pred.power.t.BV <- 1-pt(criticalValue.t, df=df.models, delta/sqrt(vard.BV))
-  pred.power.t.CS <- 1-pt(criticalValue.t, df=df.models, delta/sqrt(vard.CS))
-  pred.power.t.ANCOVA <- 1-pt(criticalValue.t, df=df.models, delta/sqrt(vard.ANCOVA))
-  pred.power.z.HG <- 1-pnorm(criticalValue.z, mean=(delta/sqrt(vard.HG)))
-  pred.power.z.BV <- 1-pnorm(criticalValue.z, mean=(delta/sqrt(vard.BV)))
-  pred.power.z.CS <- 1-pnorm(criticalValue.z, mean=(delta/sqrt(vard.CS)))
-  pred.power.z.ANCOVA <- 1-pnorm(criticalValue.z, mean=(delta/sqrt(vard.ANCOVA)))
+  criticalValue.t.HG <- qt(p=(1-alpha/2), df=(N-2))
+  criticalValue.t <- qt(p=(1-alpha/2), df=df.models)
+  criticalValue.z <- qnorm(p=(1-alpha/2))
+  pred.power.t.HG <- 1-pt(criticalValue.t, df=(N-2), abs(delta)/sqrt(vard.HG))
+  pred.power.t.BV <- 1-pt(criticalValue.t, df=df.models, abs(delta)/sqrt(vard.BV))
+  pred.power.t.CS <- 1-pt(criticalValue.t, df=df.models, abs(delta)/sqrt(vard.CS))
+  pred.power.t.ANCOVA <- 1-pt(criticalValue.t, df=df.models, abs(delta)/sqrt(vard.ANCOVA))
+  pred.power.z.HG <- 1-pnorm(criticalValue.z, mean=(abs(delta)/sqrt(vard.HG)))
+  pred.power.z.BV <- 1-pnorm(criticalValue.z, mean=(abs(delta)/sqrt(vard.BV)))
+  pred.power.z.CS <- 1-pnorm(criticalValue.z, mean=(abs(delta)/sqrt(vard.CS)))
+  pred.power.z.ANCOVA <- 1-pnorm(criticalValue.z, mean=(abs(delta)/sqrt(vard.ANCOVA)))
   
   pred.power.t <- c(pred.power.t.HG,pred.power.t.BV,pred.power.t.CS,pred.power.t.ANCOVA)
   pred.power.z <- c(pred.power.z.HG,pred.power.z.BV,pred.power.z.CS,pred.power.z.ANCOVA)
