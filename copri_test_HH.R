@@ -75,8 +75,7 @@ while(i<nsim){
                        "SigmaPhi11.se","SigmaPhi12.se","SigmaPhi22.se","SigmaE11.se","SigmaE12.se","SigmaE22.se")
   
 simData <- as.data.frame(simData)
-naive.simData <- as.data.frame(naive.simData)
 
-write.table(simData, file=paste("results/UncorrectedResults_",analysis,"_scenario",scenario,".txt",sep=""), sep="\t", row.names=F)
-write.table(naive.simData, file=paste("results/NaiveResults_",analysis,"_scenario",scenario,".txt",sep=""), sep="\t", row.names=F)
+write.table(simData, file=paste("/Users/kdavis07/Library/CloudStorage/Dropbox/SW-CRT Methods Development/3_Baseline/RCode/z_CRT/UncorrectedResults_scenario",scenario,".txt",sep=""), sep="\t", row.names=F)
+
 #write.table(simData, file=paste("results/CorrectedResults_",analysis,"_scenario",scenario,".txt",sep=""), sep="\t", row.names=F)

@@ -1,5 +1,6 @@
 library(mvtnorm)
 library(numDeriv)
+library(sjlabelled)
 
 # function to perform EM estimation with K=2 outcomes
 EM.estim <- function(data, fm1,fm2, maxiter=500,epsilon=1e-4
@@ -13,6 +14,14 @@ EM.estim <- function(data, fm1,fm2, maxiter=500,epsilon=1e-4
   TermsX2 <- fm2$terms
   mfX1 <- model.frame(TermsX1, data = data)[,-1]
   mfX2 <- model.frame(TermsX2, data = data)[,-1]
+  
+  labels1<-attributes(get_term_labels(fm1))
+  n.labels1<-length(labels1$names)
+  labels1<-c("Intercept0",labels1$names[-n.labels1])
+  
+  labels2<-attributes(get_term_labels(fm2))
+  n.labels2<-length(labels2$names)
+  labels2<-c("Intercept1",labels2$names[-n.labels2])
   
   # vector of cluster sizes
   m <- as.numeric(table(fm1$groups[[1]]))
@@ -142,13 +151,16 @@ EM.estim <- function(data, fm1,fm2, maxiter=500,epsilon=1e-4
   }
   
   Vtheta <- matrix(NA,length(thetah),length(thetah))
-  try(Vtheta <- solve(-hessian(loglik,thetah))) #, silent = TRUE
-  SEcheck <- "GOOD"
-  if(anyNA(Vtheta)==TRUE|min(diag(Vtheta))<0) SEcheck <- "ERROR"
-  #Vtheta = try(solve(-hessian(loglik,thetah)))
-  #SEtheta = sqrt(diag(Vtheta))
+  #try(Vtheta <- solve(-hessian(loglik,thetah))) #, silent = TRUE
+  #SEcheck <- "GOOD"
+  #if(anyNA(Vtheta)==TRUE|min(diag(Vtheta))<0) SEcheck <- "ERROR"
+  Vtheta = try(solve(-hessian(loglik,thetah)))
+  SEtheta = sqrt(diag(Vtheta))
+  
+  names(zeta)<-c(labels1,labels2)
+  names(SEtheta)<-c(labels1,labels2,"SigmaPhi.11","SigmaPhi.12","SigmaPhi.22","SigmaE.11","SigmaE.12","SigmaE.22")
   
   param <- list(theta=list(zeta=zeta,SigmaPhi=SigmaPhi,SigmaE=SigmaE),loglik=LLnew,eps=epsilon,iter=niter,
-                Vtheta=Vtheta,SEcheck=SEcheck)#SEtheta=SEtheta)
+                Vtheta=Vtheta,SEtheta=SEtheta)
   return(param) 
 }
