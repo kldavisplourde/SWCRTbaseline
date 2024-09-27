@@ -24,14 +24,14 @@
 # t: number of time periods
 # m: cluster-period size
 # alpha: type I error control, default is 0.05
-# user.spec.df: degrees of freedom for bivariate model, change score model, and ANCOVA model (Default is N-3), for Hooper/Girling (follow-up) model this is always set to N-2
+# user.spec.df: degrees of freedom for bivariate model, change score model, and ANCOVA, and Hooper/Girling (endline-only) model (Default is N-2)
 ########################################################################################################################################################
 ####Function to Calculate Power Given Design Configurations based on the t test#######
 ####Critical value c is set to t_alpha, (1-alpha)th quantile of the t distribution with df = N-2###
-calPower <- function(delta,vars,rho0,rho1,rho2,N,t,m,alpha=0.05,user.spec.df=0)
+calPower <- function(delta,vars,rho0,rho1,rho2,N,t,m,alpha=0.05,user.spec.df=N-2)
 {
-  K<-2
-  df.models <- ifelse(user.spec.df>0,user.spec.df,N-K-1)
+  #K<-2
+  df.models <- user.spec.df #ifelse(user.spec.df>0,user.spec.df,N-K-1)
   
   # Create X matrix
   X<-NULL
