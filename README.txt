@@ -8,4 +8,4 @@ List of Files:
 
 NOTES:  1) Simulation study additionally requires the installation of the nlme, doMC, doRNG, and lmeInfo packages. The EM algorithm requires the installation of the mvtnorm, numDeriv, and sjlabelled packages.
 	2) You will need to change path names before running the programs. 
-	3) Latest version of all files are available on GitHub: https://github.com/kldavisplourde/SWCRTmultivariate
+	3) Latest version of all files are available on GitHub: https://github.com/kldavisplourde/SWCRTbaseline
